@@ -200,3 +200,39 @@ export const FALLBACK_SUPPLY_SCENARIOS = {
     },
   },
 };
+
+export interface ConcessionBlock {
+  id: string;
+  name: string;
+  bounds: [[number, number], [number, number]];
+  sector: string;
+  score: number;
+  priority: 'HIGH' | 'MODERATE' | 'LOW';
+}
+
+export const FALLBACK_CONCESSION_BLOCKS: ConcessionBlock[] = [
+  // Balaghat-Bhandara Mining Sector
+  { id: 'BLK-101', name: 'Balaghat Block A', bounds: [[21.45, 79.50], [21.65, 79.75]], sector: 'Balaghat-Bhandara Mining Sector', score: 0.88, priority: 'HIGH' },
+  { id: 'BLK-102', name: 'Balaghat Block B', bounds: [[21.68, 79.70], [21.92, 80.00]], sector: 'Balaghat-Bhandara Mining Sector', score: 0.91, priority: 'HIGH' },
+  { id: 'BLK-103', name: 'Bhandara Deep Block', bounds: [[21.40, 79.80], [21.60, 80.05]], sector: 'Balaghat-Bhandara Mining Sector', score: 0.74, priority: 'MODERATE' },
+  
+  // Nagpur-Sausar Lease Grid
+  { id: 'BLK-104', name: 'Sausar Valley North', bounds: [[21.55, 78.95], [21.80, 79.25]], sector: 'Nagpur-Sausar Lease Grid', score: 0.82, priority: 'HIGH' },
+  { id: 'BLK-105', name: 'Nagpur East Sector', bounds: [[21.30, 79.20], [21.55, 79.48]], sector: 'Nagpur-Sausar Lease Grid', score: 0.68, priority: 'MODERATE' },
+  { id: 'BLK-106', name: 'Tumsar Concession', bounds: [[21.35, 79.70], [21.58, 79.98]], sector: 'Nagpur-Sausar Lease Grid', score: 0.62, priority: 'MODERATE' },
+
+  // Sandur Mineralized Block
+  { id: 'BLK-107', name: 'Sandur West Ridge', bounds: [[14.90, 76.35], [15.15, 76.60]], sector: 'Sandur Mineralized Block', score: 0.86, priority: 'HIGH' },
+  { id: 'BLK-108', name: 'Hospet South Sector', bounds: [[15.12, 76.45], [15.35, 76.72]], sector: 'Sandur Mineralized Block', score: 0.71, priority: 'MODERATE' },
+  
+  // Keonjhar-Joda Manganese Zone
+  { id: 'BLK-109', name: 'Joda Exploration Lease', bounds: [[21.65, 85.10], [21.90, 85.45]], sector: 'Keonjhar-Joda Manganese Zone', score: 0.89, priority: 'HIGH' },
+  { id: 'BLK-110', name: 'Bonai Extended Block', bounds: [[21.75, 84.65], [22.00, 85.00]], sector: 'Keonjhar-Joda Manganese Zone', score: 0.73, priority: 'MODERATE' },
+
+  // Vizianagaram-Srikakulam Concession
+  { id: 'BLK-111', name: 'Vizianagaram Sector A', bounds: [[18.10, 83.25], [18.35, 83.60]], sector: 'Vizianagaram-Srikakulam Concession', score: 0.84, priority: 'HIGH' },
+  { id: 'BLK-112', name: 'Srikakulam Coastal Strip', bounds: [[18.25, 83.75], [18.50, 84.10]], sector: 'Vizianagaram-Srikakulam Concession', score: 0.66, priority: 'MODERATE' },
+
+  // Koraput Exploration Sector
+  { id: 'BLK-113', name: 'Koraput Valley Sector', bounds: [[18.55, 82.55], [18.85, 82.90]], sector: 'Koraput Exploration Sector', score: 0.78, priority: 'MODERATE' },
+];

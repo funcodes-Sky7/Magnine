@@ -14,18 +14,20 @@ import {
   MapContainer as LeafletMap,
   TileLayer,
   CircleMarker,
+  Rectangle,
   Tooltip,
   useMap,
   ZoomControl,
 } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from './leaflet-setup';
-import type { Target, TileLayerInfo, ViewportPlot, IdentifyResult } from '../services/api';
+import type { Target, TileLayerInfo, ViewportPlot, IdentifyResult, ConcessionBlock } from '../services/api';
 import {
   getTileUrl,
   getViewportPlots,
   identifyPoint,
   getGEECatalog,
+  getConcessions,
   type GEECatalog,
 } from '../services/api';
 import { FALLBACK_OCCURRENCES } from '../data/fallbackData';
@@ -424,6 +426,17 @@ export default function MapContainer({
     occurrences: 0.95,
   }));
 
+  // ── Concession blocks (AI-scored, loaded from backend, fallback to static) ─
+  const [concessionBlocks, setConcessionBlocks] = useState<ConcessionBlock[]>([]);
+  const [concessionsDataSource, setConcessionsDataSource] = useState<string>('loading');
+
+  useEffect(() => {
+    getConcessions().then(res => {
+      setConcessionBlocks(res.concessions);
+      setConcessionsDataSource(res.data_source);
+    });
+  }, []);
+
   // ── GEE connection status ────────────────────────────────────────────────
   const [geeConnected, setGeeConnected] = useState<boolean | null>(null);
 
@@ -610,22 +623,102 @@ export default function MapContainer({
           }}
         />
 
-        {/* Known Mn Occurrence Markers (Mines & Deposits) */}
+        {/* ── Square / Rectangular Concession Lease Blocks (AI-scored) ── */}
+        {layerVisibility['plots'] === true &&
+          concessionBlocks.map(block => {
+            const isHigh = block.priority === 'HIGH';
+            const isMod = block.priority === 'MODERATE';
+            const borderColor = isHigh ? '#16A34A' : isMod ? '#EA580C' : '#64748B';
+            const fillColor   = isHigh ? '#22C55E' : isMod ? '#FB923C' : '#94A3B8';
+            return (
+              <Rectangle
+                key={`concession-${block.id}`}
+                bounds={block.bounds}
+                pathOptions={{
+                  color: borderColor,
+                  weight: 2,
+                  dashArray: '5, 5',
+                  fillColor: fillColor,
+                  fillOpacity: 0.16,
+                }}
+              >
+                <Tooltip direction="center" permanent={false} opacity={0.95}>
+                  <div style={{ fontFamily: 'Inter, sans-serif', padding: '2px 4px', minWidth: 170 }}>
+                    <div style={{ fontSize: 10, color: borderColor, fontWeight: 700, letterSpacing: '0.05em' }}>
+                      CONCESSION LEASE BLOCK
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 700, margin: '2px 0' }}>{block.name}</div>
+                    <div style={{ fontSize: 11, color: '#334155' }}>{block.sector}</div>
+                    <div style={{ display: 'flex', gap: 10, marginTop: 4, alignItems: 'center' }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: borderColor }}>
+                        {(block.score * 100).toFixed(0)}% prospectivity
+                      </span>
+                      <span style={{
+                        fontSize: 10, fontWeight: 700, padding: '1px 6px',
+                        borderRadius: 4, background: borderColor, color: '#fff',
+                      }}>
+                        {block.priority}
+                      </span>
+                    </div>
+                    {block.cell_count !== undefined && (
+                      <div style={{ fontSize: 10, color: '#64748B', marginTop: 2 }}>
+                        Avg of {block.cell_count} grid cell{block.cell_count !== 1 ? 's' : ''}
+                        {concessionsDataSource === 'real_ml_predictions' ? ' · GEE ML Model' : ' · Demo data'}
+                      </div>
+                    )}
+                  </div>
+                </Tooltip>
+              </Rectangle>
+            );
+          })}
+
+        {/* ── Exploration Target Square Footprint Boxes ── */}
+        {layerVisibility['plots'] === true &&
+          targets.map(target => {
+            const radius_km = Math.sqrt((target.area_km2 || 60) / Math.PI);
+            const dLat = radius_km / 111;
+            const dLng = radius_km / (111 * Math.cos((target.lat * Math.PI) / 180));
+            const isHigh = target.priority === 'HIGH';
+            const isMod = target.priority === 'MODERATE';
+            const isSelected = selectedTarget?.target_id === target.target_id;
+            const strokeColor = isSelected ? '#3B82F6' : isHigh ? '#16A34A' : isMod ? '#EA580C' : '#64748B';
+            const fillColor = isHigh ? '#22C55E' : isMod ? '#FB923C' : '#94A3B8';
+
+            return (
+              <Rectangle
+                key={`target-box-${target.target_id}`}
+                bounds={[
+                  [target.lat - dLat, target.lng - dLng],
+                  [target.lat + dLat, target.lng + dLng],
+                ]}
+                pathOptions={{
+                  color: strokeColor,
+                  weight: isSelected ? 3 : 2,
+                  dashArray: '4, 4',
+                  fillColor: fillColor,
+                  fillOpacity: isSelected ? 0.28 : 0.14,
+                }}
+                eventHandlers={{ click: () => onTargetClick(target) }}
+              />
+            );
+          })}
+
+        {/* ── Known Manganese Mines & Deposits (RED Circles) ── */}
         {layerVisibility['occurrences'] === true &&
           FALLBACK_OCCURRENCES.map(occ => (
             <CircleMarker
               key={occ.id}
               center={[occ.lat, occ.lng]}
-              radius={6}
-              fillColor="#059669"
-              fillOpacity={0.9}
+              radius={5}
+              fillColor="#DC2626"
+              fillOpacity={0.95}
               color="#FFFFFF"
               weight={2}
             >
               <Tooltip direction="top" offset={[0, -8]} opacity={1}>
                 <div style={{ fontFamily: 'Inter, sans-serif', minWidth: 150 }}>
-                  <div style={{ fontSize: 10, color: '#059669', fontWeight: 700 }}>
-                    KNOWN MN DEPOSIT
+                  <div style={{ fontSize: 10, color: '#DC2626', fontWeight: 700 }}>
+                    HISTORICAL MN DEPOSIT / MINE
                   </div>
                   <div style={{ fontSize: 13, fontWeight: 700, margin: '2px 0' }}>
                     {occ.name}
@@ -641,24 +734,27 @@ export default function MapContainer({
             </CircleMarker>
           ))}
 
-        {/* AI Exploration Target Markers (Green dots = High Priority, Amber = Moderate) */}
+        {/* ── AI Exploration Target Markers (Green dots = High, Orange dots = Moderate) ── */}
         {targets.map(target => {
           const isHigh = target.priority === 'HIGH';
+          const isMod = target.priority === 'MODERATE';
           const isSelected = selectedTarget?.target_id === target.target_id;
+          const fillColor = isHigh ? '#16A34A' : isMod ? '#EA580C' : '#64748B';
+
           return (
             <CircleMarker
               key={target.target_id}
               center={[target.lat, target.lng]}
-              radius={isSelected ? 12 : isHigh ? 8 : 6}
-              fillColor={isHigh ? '#2D6A4F' : '#D97706'}
-              fillOpacity={0.9}
+              radius={isSelected ? 12 : isHigh ? 8 : isMod ? 7 : 5}
+              fillColor={fillColor}
+              fillOpacity={0.95}
               color="#FFFFFF"
               weight={isSelected ? 3 : 2}
               eventHandlers={{ click: () => onTargetClick(target) }}
             >
               <Tooltip direction="top" offset={[0, -10]} opacity={1}>
                 <div style={{ fontFamily: 'Inter, sans-serif', minWidth: 150 }}>
-                  <div style={{ fontSize: 10, color: isHigh ? '#2D6A4F' : '#D97706', fontWeight: 700 }}>
+                  <div style={{ fontSize: 10, color: fillColor, fontWeight: 700 }}>
                     {target.priority} PRIORITY TARGET
                   </div>
                   <div style={{ fontSize: 13, fontWeight: 700, margin: '2px 0' }}>

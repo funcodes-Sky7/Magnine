@@ -7,6 +7,7 @@ import {
   FALLBACK_MODEL_VERSIONS,
   FALLBACK_SUPPLY,
   FALLBACK_SUPPLY_SCENARIOS,
+  FALLBACK_CONCESSION_BLOCKS,
 } from '../data/fallbackData';
 
 const BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
@@ -221,6 +222,32 @@ export const getSupplyScenarios = () =>
     .get('/api/supply/scenarios')
     .then(r => r.data)
     .catch(() => FALLBACK_SUPPLY_SCENARIOS);
+
+// ── Concession block type ─────────────────────────────────────────────────────
+export interface ConcessionBlock {
+  id: string;
+  name: string;
+  bounds: [[number, number], [number, number]];
+  sector: string;
+  score: number;
+  priority: 'HIGH' | 'MODERATE' | 'LOW';
+  cell_count?: number;
+  data_source?: string;
+}
+
+/**
+ * Fetch concession blocks with AI-computed prospectivity scores from the backend.
+ * Falls back to static FALLBACK_CONCESSION_BLOCKS when the backend is offline (Vercel).
+ */
+export const getConcessions = (): Promise<{ concessions: ConcessionBlock[]; count: number; data_source: string }> =>
+  api
+    .get<{ concessions: ConcessionBlock[]; count: number; data_source: string }>('/api/concessions')
+    .then(r => r.data)
+    .catch(() => ({
+      concessions: FALLBACK_CONCESSION_BLOCKS as ConcessionBlock[],
+      count: FALLBACK_CONCESSION_BLOCKS.length,
+      data_source: 'static_fallback',
+    }));
 
 export const getHealth = () =>
   api
