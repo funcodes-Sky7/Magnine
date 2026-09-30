@@ -28,6 +28,7 @@ import {
   getGEECatalog,
   type GEECatalog,
 } from '../services/api';
+import { FALLBACK_OCCURRENCES } from '../data/fallbackData';
 
 // Fix leaflet icon paths
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -168,10 +169,10 @@ function GEETileLayer({
 
   if (!visible || !info) return null;
 
-  const url =
-    info.tile_url && info.tile_url.startsWith('/api/')
-      ? `${BASE_URL}${info.tile_url}`
-      : info.tile_url || ESRI_FALLBACK_URL;
+  const isLocalApi = Boolean(info.tile_url && info.tile_url.startsWith('/api/'));
+  const url = isLocalApi
+    ? (BASE_URL && !BASE_URL.startsWith('/') ? `${BASE_URL.replace(/\/+$/, '')}${info.tile_url}` : ESRI_FALLBACK_URL)
+    : (info.tile_url || ESRI_FALLBACK_URL);
 
   return (
     <TileLayer
@@ -514,6 +515,13 @@ export default function MapContainer({
         style={{ width: '100%', height: '100%' }}
         zoomControl={false}
       >
+        {/* Solid fallback satellite basemap — guarantees map is never blank */}
+        <TileLayer
+          url={ESRI_FALLBACK_URL}
+          attribution={ESRI_ATTRIBUTION}
+          maxZoom={20}
+        />
+
         {/* ── Raster basemap layers (only active one rendered) ── */}
         {BASEMAP_IDS.map(id => (
           <GEETileLayer
@@ -602,40 +610,76 @@ export default function MapContainer({
           }}
         />
 
-        {/* Legacy target markers from /api/targets (kept for backward compat) */}
-        {legacyLayers.occurrences !== false &&
-          targets.map(target => {
-            const isHigh = target.priority === 'HIGH';
-            const isSelected = selectedTarget?.target_id === target.target_id;
-            return (
-              <CircleMarker
-                key={target.target_id}
-                center={[target.lat, target.lng]}
-                radius={isSelected ? 11 : isHigh ? 7 : 5}
-                fillColor={isHigh ? '#2D6A4F' : '#B45309'}
-                fillOpacity={0.85}
-                color="#FFFFFF"
-                weight={isSelected ? 3 : 2}
-                eventHandlers={{ click: () => onTargetClick(target) }}
-              >
-                <Tooltip direction="top" offset={[0, -10]} opacity={1}>
-                  <div style={{ fontFamily: 'Inter, sans-serif', minWidth: 140 }}>
-                    <div style={{ fontSize: 11, color: '#697078', fontWeight: 600 }}>
-                      {target.target_id}
-                    </div>
-                    <div style={{ fontSize: 13, fontWeight: 600, margin: '2px 0' }}>
-                      {target.name}
-                    </div>
-                    <div style={{ display: 'flex', gap: 12, marginTop: 6 }}>
-                      <span style={{ fontSize: 11 }}>
-                        <b>{(target.prospectivity * 100).toFixed(0)}%</b> prospectivity
-                      </span>
-                    </div>
+        {/* Known Mn Occurrence Markers (Mines & Deposits) */}
+        {layerVisibility['occurrences'] === true &&
+          FALLBACK_OCCURRENCES.map(occ => (
+            <CircleMarker
+              key={occ.id}
+              center={[occ.lat, occ.lng]}
+              radius={6}
+              fillColor="#059669"
+              fillOpacity={0.9}
+              color="#FFFFFF"
+              weight={2}
+            >
+              <Tooltip direction="top" offset={[0, -8]} opacity={1}>
+                <div style={{ fontFamily: 'Inter, sans-serif', minWidth: 150 }}>
+                  <div style={{ fontSize: 10, color: '#059669', fontWeight: 700 }}>
+                    KNOWN MN DEPOSIT
                   </div>
-                </Tooltip>
-              </CircleMarker>
-            );
-          })}
+                  <div style={{ fontSize: 13, fontWeight: 700, margin: '2px 0' }}>
+                    {occ.name}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#334155' }}>
+                    Grade: <b>{occ.grade_pct}% Mn</b> | {occ.state}
+                  </div>
+                  <div style={{ fontSize: 10, color: '#64748B', marginTop: 2 }}>
+                    Status: {occ.status} ({occ.type})
+                  </div>
+                </div>
+              </Tooltip>
+            </CircleMarker>
+          ))}
+
+        {/* AI Exploration Target Markers (Green dots = High Priority, Amber = Moderate) */}
+        {targets.map(target => {
+          const isHigh = target.priority === 'HIGH';
+          const isSelected = selectedTarget?.target_id === target.target_id;
+          return (
+            <CircleMarker
+              key={target.target_id}
+              center={[target.lat, target.lng]}
+              radius={isSelected ? 12 : isHigh ? 8 : 6}
+              fillColor={isHigh ? '#2D6A4F' : '#D97706'}
+              fillOpacity={0.9}
+              color="#FFFFFF"
+              weight={isSelected ? 3 : 2}
+              eventHandlers={{ click: () => onTargetClick(target) }}
+            >
+              <Tooltip direction="top" offset={[0, -10]} opacity={1}>
+                <div style={{ fontFamily: 'Inter, sans-serif', minWidth: 150 }}>
+                  <div style={{ fontSize: 10, color: isHigh ? '#2D6A4F' : '#D97706', fontWeight: 700 }}>
+                    {target.priority} PRIORITY TARGET
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 700, margin: '2px 0' }}>
+                    {target.name} ({target.target_id})
+                  </div>
+                  <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
+                    <span style={{ fontSize: 11 }}>
+                      <b>{(target.prospectivity * 100).toFixed(0)}%</b> prospectivity
+                    </span>
+                    <span style={{ fontSize: 11, color: '#64748B' }}>
+                      {target.depth_min}-{target.depth_max}m
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 10, color: '#475569', marginTop: 2 }}>
+                    {target.geology} ({target.state})
+                  </div>
+                </div>
+              </Tooltip>
+            </CircleMarker>
+          );
+        })}
 
         <MapController
           selectedTarget={selectedTarget}
