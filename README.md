@@ -2,6 +2,8 @@
 
 > **SIH 2026 Prototype** | Intelligent Mining & Mineral Exploration
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/funcodes-Sky7/Magnine/blob/main/colab_run.ipynb)
+
 An AI-powered exploration intelligence platform integrating satellite remote sensing (Google Earth Engine), geological data, and machine learning to identify high-prospectivity manganese targets across India.
 
 ---
