@@ -1,8 +1,8 @@
-# MANGANAI — AI-Powered Manganese Exploration Intelligence
+# Magnine (MANGANAI) — AI-Powered Manganese Exploration Intelligence
 
 > **SIH 2026 Prototype** | Intelligent Mining & Mineral Exploration
 
-MANGANAI is a closed-loop AI system that integrates satellite remote sensing, geological data, and field validation to identify high-prospectivity manganese targets across India's major manganese belts.
+An AI-powered exploration intelligence platform integrating satellite remote sensing (Google Earth Engine), geological data, and machine learning to identify high-prospectivity manganese targets across India.
 
 ---
 
@@ -164,4 +164,4 @@ Interactive API docs: **http://localhost:8000/docs**
 
 ---
 
-*"Every field result becomes new evidence for the next exploration decision." — MANGANAI System Design*
+*"Every field result becomes new evidence for the next exploration decision." — Magnine System Design*
