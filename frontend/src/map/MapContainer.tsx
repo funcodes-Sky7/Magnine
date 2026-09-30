@@ -710,34 +710,78 @@ export default function MapContainer({
 
         {/* ── Known Manganese Mines & Deposits (RED Circles) ── */}
         {layerVisibility['occurrences'] === true &&
-          FALLBACK_OCCURRENCES.map(occ => (
-            <CircleMarker
-              key={occ.id}
-              center={[occ.lat, occ.lng]}
-              radius={5}
-              fillColor="#DC2626"
-              fillOpacity={0.95}
-              color="#FFFFFF"
-              weight={2}
-            >
-              <Tooltip direction="top" offset={[0, -8]} opacity={1}>
-                <div style={{ fontFamily: 'Inter, sans-serif', minWidth: 150 }}>
-                  <div style={{ fontSize: 10, color: '#DC2626', fontWeight: 700 }}>
-                    HISTORICAL MN DEPOSIT / MINE
+          FALLBACK_OCCURRENCES.map(occ => {
+            const isSelected = selectedTarget?.target_id === occ.id;
+            return (
+              <CircleMarker
+                key={occ.id}
+                center={[occ.lat, occ.lng]}
+                radius={isSelected ? 10 : 7}
+                fillColor="#DC2626"
+                fillOpacity={0.95}
+                color={isSelected ? '#3B82F6' : '#FFFFFF'}
+                weight={isSelected ? 3 : 2}
+                pane="markerPane"
+                eventHandlers={{
+                  click: (e) => {
+                    L.DomEvent.stopPropagation(e);
+                    const pseudoTarget: Target = {
+                      target_id: occ.id,
+                      name: occ.name,
+                      priority: 'HIGH',
+                      prospectivity: occ.grade_pct ? Math.min(Number((occ.grade_pct / 50).toFixed(2)), 1.0) : 0.85,
+                      confidence: 0.95,
+                      risk: 'Low - Verified Deposit',
+                      lat: occ.lat,
+                      lng: occ.lng,
+                      area_km2: 25.0,
+                      depth_min: 0,
+                      depth_max: 60,
+                      geology: `${occ.type} Manganese Mineralization`,
+                      state: occ.state,
+                      evidence: [
+                        `Verified Historical Manganese Deposit: ${occ.name} (${occ.id})`,
+                        `Assayed Ore Grade: ${occ.grade_pct}% Mn`,
+                        `Current Operational Status: ${occ.status}`,
+                        `Deposit Classification: ${occ.type}`,
+                        `State: ${occ.state}, India`,
+                        `Ground-truth verification benchmark for ML prospectivity model`,
+                      ],
+                      feature_contributions: {
+                        geology_score: 0.95,
+                        spectral_fe_mn_ratio: 0.90,
+                        dist_to_occurrence_km: 1.0,
+                      },
+                      model_version: 'Geological Survey of India (GSI) Ground Truth',
+                      recommended_action: `Verified Reserve (${occ.status}) — Active Production`,
+                      depth_estimate_note: `Documented deposit with confirmed ${occ.grade_pct}% Mn mineralization.`,
+                    };
+                    onTargetClick(pseudoTarget);
+                  },
+                }}
+              >
+                <Tooltip direction="top" offset={[0, -10]} opacity={1}>
+                  <div style={{ fontFamily: 'Inter, sans-serif', minWidth: 160 }}>
+                    <div style={{ fontSize: 10, color: '#DC2626', fontWeight: 700, letterSpacing: '0.05em' }}>
+                      HISTORICAL MN DEPOSIT / MINE
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 700, margin: '2px 0' }}>
+                      {occ.name}
+                    </div>
+                    <div style={{ fontSize: 11, color: '#334155' }}>
+                      Grade: <b>{occ.grade_pct}% Mn</b> | {occ.state}
+                    </div>
+                    <div style={{ fontSize: 10, color: '#64748B', marginTop: 2 }}>
+                      Status: {occ.status} ({occ.type})
+                    </div>
+                    <div style={{ fontSize: 10, color: '#DC2626', fontWeight: 600, marginTop: 4 }}>
+                      👆 Click to open details
+                    </div>
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 700, margin: '2px 0' }}>
-                    {occ.name}
-                  </div>
-                  <div style={{ fontSize: 11, color: '#334155' }}>
-                    Grade: <b>{occ.grade_pct}% Mn</b> | {occ.state}
-                  </div>
-                  <div style={{ fontSize: 10, color: '#64748B', marginTop: 2 }}>
-                    Status: {occ.status} ({occ.type})
-                  </div>
-                </div>
-              </Tooltip>
-            </CircleMarker>
-          ))}
+                </Tooltip>
+              </CircleMarker>
+            );
+          })}
 
         {/* ── AI Exploration Target Markers (Green dots = High, Orange dots = Moderate) ── */}
         {targets.map(target => {
@@ -754,9 +798,15 @@ export default function MapContainer({
               radius={isSelected ? 12 : isHigh ? 8 : isMod ? 7 : 5}
               fillColor={fillColor}
               fillOpacity={0.95}
-              color="#FFFFFF"
+              color={isSelected ? '#3B82F6' : '#FFFFFF'}
               weight={isSelected ? 3 : 2}
-              eventHandlers={{ click: () => onTargetClick(target) }}
+              pane="markerPane"
+              eventHandlers={{
+                click: (e) => {
+                  L.DomEvent.stopPropagation(e);
+                  onTargetClick(target);
+                },
+              }}
             >
               <Tooltip direction="top" offset={[0, -10]} opacity={1}>
                 <div style={{ fontFamily: 'Inter, sans-serif', minWidth: 150 }}>

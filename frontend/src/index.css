@@ -1361,3 +1361,10 @@ body {
 .result-badge.confirmed   { background: var(--green-bg); color: var(--green); }
 .result-badge.not_found   { background: var(--red-bg); color: var(--red); }
 .result-badge.inconclusive { background: var(--amber-bg); color: var(--amber); }
+
+/* ── Leaflet Interactive Vector Markers ─────────────────────── */
+.leaflet-marker-pane svg path.leaflet-interactive,
+.leaflet-pane svg path.leaflet-interactive {
+  cursor: pointer !important;
+}
+
