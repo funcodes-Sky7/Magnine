@@ -131,16 +131,34 @@ def generate_prospectivity_grid() -> List[Dict]:
     return cells
 
 
+# ── Priority Classification (single source of truth) ──────────────────────────
+# Applied to ALL targets regardless of source (real ML or demo fallback)
+# so the map always shows a consistent colour.
+#   prospectivity >= 0.80  →  HIGH     (green)
+#   prospectivity >= 0.60  →  MODERATE (orange)
+#   prospectivity <  0.60  →  LOW      (grey)
+def priority_from_prospectivity(score: float) -> str:
+    if score >= 0.80:
+        return "HIGH"
+    elif score >= 0.60:
+        return "MODERATE"
+    return "LOW"
+
+
 def generate_targets() -> List[Dict]:
     """
     Return exploration targets.
     Priority: real GEE+ML predictions > hardcoded demo fallback.
+    Priority is ALWAYS recomputed from prospectivity to guarantee consistency.
     """
     # ── Try loading real model predictions ─────────────────────────────────────
     if os.path.exists(_TARGETS_PATH):
         try:
             with open(_TARGETS_PATH) as f:
                 targets = json.load(f)
+            # Re-enforce priority so stale JSON files can't cause conflicts
+            for t in targets:
+                t["priority"] = priority_from_prospectivity(t.get("prospectivity", 0.0))
             print(f"[DATA] Loaded REAL ML targets ({len(targets)}) from {_TARGETS_PATH}")
             return targets
         except Exception as exc:
@@ -318,6 +336,9 @@ def generate_targets() -> List[Dict]:
             }
         },
     ]
+    # Enforce consistent priority on demo targets
+    for t in targets:
+        t["priority"] = priority_from_prospectivity(t["prospectivity"])
     return targets
 
 

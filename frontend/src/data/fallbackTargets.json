@@ -242,7 +242,7 @@
   {
     "target_id": "M-007",
     "name": "Iron Ore Series (BHJ Target 7",
-    "priority": "MODERATE",
+    "priority": "HIGH",
     "prospectivity": 0.8929,
     "confidence": 0.8087,
     "risk": "Moderate",
@@ -282,7 +282,7 @@
   {
     "target_id": "M-008",
     "name": "Eastern Ghats Mobile Belt Target 8",
-    "priority": "MODERATE",
+    "priority": "HIGH",
     "prospectivity": 0.8919,
     "confidence": 0.8501,
     "risk": "Moderate",
@@ -322,7 +322,7 @@
   {
     "target_id": "M-009",
     "name": "Precambrian Metamorphic Target 9",
-    "priority": "MODERATE",
+    "priority": "HIGH",
     "prospectivity": 0.8907,
     "confidence": 0.8215,
     "risk": "Moderate",
@@ -362,7 +362,7 @@
   {
     "target_id": "M-010",
     "name": "Precambrian Metamorphic Target 10",
-    "priority": "MODERATE",
+    "priority": "HIGH",
     "prospectivity": 0.8887,
     "confidence": 0.8385,
     "risk": "Moderate",
@@ -402,7 +402,7 @@
   {
     "target_id": "M-011",
     "name": "Precambrian Metamorphic Target 11",
-    "priority": "MODERATE",
+    "priority": "HIGH",
     "prospectivity": 0.8831,
     "confidence": 0.8034,
     "risk": "Moderate",
@@ -442,7 +442,7 @@
   {
     "target_id": "M-012",
     "name": "Koraput Alkaline Target 12",
-    "priority": "MODERATE",
+    "priority": "HIGH",
     "prospectivity": 0.882,
     "confidence": 0.8004,
     "risk": "Moderate",
@@ -482,7 +482,7 @@
   {
     "target_id": "M-013",
     "name": "Eastern Ghats - Khondalite Belt Target 13",
-    "priority": "MODERATE",
+    "priority": "HIGH",
     "prospectivity": 0.8792,
     "confidence": 0.8503,
     "risk": "Moderate",
@@ -522,7 +522,7 @@
   {
     "target_id": "M-014",
     "name": "Precambrian Metamorphic Target 14",
-    "priority": "MODERATE",
+    "priority": "HIGH",
     "prospectivity": 0.8766,
     "confidence": 0.8554,
     "risk": "Moderate",
@@ -562,7 +562,7 @@
   {
     "target_id": "M-015",
     "name": "Sausar Group Mn-phyllite Target 15",
-    "priority": "MODERATE",
+    "priority": "HIGH",
     "prospectivity": 0.8737,
     "confidence": 0.8449,
     "risk": "Moderate",
@@ -602,7 +602,7 @@
   {
     "target_id": "M-016",
     "name": "Precambrian Metamorphic Target 16",
-    "priority": "MODERATE",
+    "priority": "HIGH",
     "prospectivity": 0.8718,
     "confidence": 0.8446,
     "risk": "Moderate",
@@ -642,7 +642,7 @@
   {
     "target_id": "M-017",
     "name": "Nagpur-Bhandara Mn Belt Target 17",
-    "priority": "LOW",
+    "priority": "HIGH",
     "prospectivity": 0.8674,
     "confidence": 0.8459,
     "risk": "High",
@@ -682,7 +682,7 @@
   {
     "target_id": "M-018",
     "name": "Precambrian Metamorphic Target 18",
-    "priority": "LOW",
+    "priority": "HIGH",
     "prospectivity": 0.863,
     "confidence": 0.8207,
     "risk": "High",
@@ -722,7 +722,7 @@
   {
     "target_id": "M-019",
     "name": "Eastern Ghats Mobile Belt Target 19",
-    "priority": "LOW",
+    "priority": "HIGH",
     "prospectivity": 0.8621,
     "confidence": 0.776,
     "risk": "High",
@@ -762,7 +762,7 @@
   {
     "target_id": "M-020",
     "name": "Precambrian Metamorphic Target 20",
-    "priority": "LOW",
+    "priority": "HIGH",
     "prospectivity": 0.8591,
     "confidence": 0.8019,
     "risk": "High",

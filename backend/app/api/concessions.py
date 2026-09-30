@@ -73,9 +73,10 @@ def _compute_block_score(block: dict, grid: list) -> dict:
         avg_score = round(nearest["prospectivity"], 4)
         cell_count = 0
 
-    if avg_score >= 0.75:
+    # Same thresholds as priority_from_prospectivity() in demo_data.py
+    if avg_score >= 0.80:
         priority = "HIGH"
-    elif avg_score >= 0.50:
+    elif avg_score >= 0.60:
         priority = "MODERATE"
     else:
         priority = "LOW"
