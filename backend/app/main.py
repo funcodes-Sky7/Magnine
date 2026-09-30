@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .database.connection import init_db
-from .api import layers, targets, predict, validation, model, supply
+from .api import layers, targets, predict, validation, model, supply, tiles, plots
 
 app = FastAPI(
     title="MANGANAI API",
@@ -38,6 +38,8 @@ app.include_router(predict.router)
 app.include_router(validation.router)
 app.include_router(model.router)
 app.include_router(supply.router)
+app.include_router(tiles.router)
+app.include_router(plots.router)
 
 
 @app.on_event("startup")

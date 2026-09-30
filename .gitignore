@@ -1,0 +1,71 @@
+# =============================================================================
+# MANGANAI - Git Ignore Configuration
+# =============================================================================
+
+# --- Environment & Secret Variables ---
+.env
+.env.*
+!.env.example
+*.env
+backend/.env
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# --- Python & Virtual Environments ---
+venv/
+.venv/
+env/
+ENV/
+backend/venv/
+backend/.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# --- Node / Frontend Build ---
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+dist-ssr/
+frontend/dist-ssr/
+.npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Databases & Local Uploads ---
+*.db
+*.sqlite
+*.sqlite3
+backend/manganai.db
+backend/data/uploads/*
+!backend/data/uploads/.gitkeep
+
+# --- Cloud & GEE Credentials ---
+credentials
+credentials.json
+*credentials*.json
+service_account*.json
+client_secrets*.json
+
+# --- OS & Editor Files ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo

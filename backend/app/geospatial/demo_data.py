@@ -1,12 +1,22 @@
 """
-MANGANAI - Demo Geospatial Data Generator
+MANGANAI - Geospatial Data Provider
 Covers India's major manganese belt: Odisha, Madhya Pradesh, Karnataka, Maharashtra
 
-DEMO DATA — For system demonstration only. Not certified geological reserve estimates.
+Data hierarchy (auto-selected at runtime):
+  1. Real ML predictions  — app/ml/predicted_targets.json  (if ml_trainer.py has been run)
+  2. Demo generator       — synthetic data as fallback
+
+Note: grade_pct values in KNOWN_OCCURRENCES are literature-sourced estimates
+from publicly available GSI/IBM reports. Not certified reserve figures.
 """
+import os
 import numpy as np
 import json
 from typing import List, Dict, Any
+
+_ML_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "ml")
+_TARGETS_PATH = os.path.normpath(os.path.join(_ML_DIR, "predicted_targets.json"))
+_GRID_PATH    = os.path.normpath(os.path.join(_ML_DIR, "predicted_grid.json"))
 
 
 # ── Study Area: India Manganese Belt ─────────────────────────────────────────
@@ -63,23 +73,33 @@ FAULTS = [
     {"id": "F005", "name": "Sausar Group Shear Zone", "type": "Shear Zone", "coords": [[79.0, 21.5], [79.5, 21.8], [80.0, 22.0], [80.5, 22.2]]},
 ]
 
-# ── Prospectivity Cells (demo grid over study area) ───────────────────────────
+# ── Prospectivity Cells ────────────────────────────────────────────────────────
 def generate_prospectivity_grid() -> List[Dict]:
-    """Generate a realistic prospectivity grid for India's Mn belt."""
+    """
+    Returns the prospectivity grid.
+    Priority: real GEE+ML predictions > synthetic demo fallback.
+    """
+    # ── Try loading real model predictions ─────────────────────────
+    if os.path.exists(_GRID_PATH):
+        try:
+            with open(_GRID_PATH) as f:
+                grid = json.load(f)
+            print(f"[DATA] Loaded REAL prospectivity grid ({len(grid)} cells) from ML model")
+            return grid
+        except Exception as exc:
+            print(f"[DATA] Failed to load real grid, using demo fallback: {exc}")
+
+    # ── Synthetic demo fallback ────────────────────────────────────
+    print("[DATA] Using synthetic demo prospectivity grid (run ml_trainer.py to upgrade)")
     np.random.seed(42)
     cells = []
     cell_id = 0
 
-    # High-prospectivity seed points (near known deposits)
     seeds = [
-        (22.06, 80.19, 0.92),   # Balaghat
-        (21.65, 79.20, 0.89),   # Sausar
-        (15.07, 76.56, 0.85),   # Sandur
-        (18.12, 83.41, 0.88),   # Vizianagaram
-        (21.78, 85.33, 0.82),   # Joda
-        (21.90, 84.85, 0.78),   # Bonai
-        (18.81, 82.71, 0.80),   # Koraput
-        (21.37, 79.84, 0.76),   # Tumsar
+        (22.06, 80.19, 0.92), (21.65, 79.20, 0.89),
+        (15.07, 76.56, 0.85), (18.12, 83.41, 0.88),
+        (21.78, 85.33, 0.82), (21.90, 84.85, 0.78),
+        (18.81, 82.71, 0.80), (21.37, 79.84, 0.76),
     ]
 
     lat_steps = np.arange(14.0, 24.5, 0.25)
@@ -87,28 +107,18 @@ def generate_prospectivity_grid() -> List[Dict]:
 
     for lat in lat_steps:
         for lng in lng_steps:
-            # Base noise
             score = np.random.beta(1.5, 4.0)
-
-            # Boost near seeds
             for s_lat, s_lng, s_score in seeds:
                 dist = np.sqrt((lat - s_lat)**2 + (lng - s_lng)**2)
                 if dist < 2.5:
                     boost = s_score * np.exp(-dist * 0.8)
                     score = max(score, boost)
-
-            # Geological correlation: higher in eastern belt
             if 80 < lng < 86 and 18 < lat < 23:
                 score = min(1.0, score * 1.3)
-
-            # Reduce in Deccan traps
             if 75 < lng < 78 and 17 < lat < 20:
                 score *= 0.4
-
-            # Reduce in Gondwana sediments
             if 82 < lng < 84 and 22 < lat < 24:
                 score *= 0.5
-
             cells.append({
                 "id": f"CELL{cell_id:05d}",
                 "lat": round(lat, 4),
@@ -122,7 +132,22 @@ def generate_prospectivity_grid() -> List[Dict]:
 
 
 def generate_targets() -> List[Dict]:
-    """Generate exploration targets from high-prospectivity cells."""
+    """
+    Return exploration targets.
+    Priority: real GEE+ML predictions > hardcoded demo fallback.
+    """
+    # ── Try loading real model predictions ─────────────────────────────────────
+    if os.path.exists(_TARGETS_PATH):
+        try:
+            with open(_TARGETS_PATH) as f:
+                targets = json.load(f)
+            print(f"[DATA] Loaded REAL ML targets ({len(targets)}) from {_TARGETS_PATH}")
+            return targets
+        except Exception as exc:
+            print(f"[DATA] Failed to load real targets, using demo fallback: {exc}")
+
+    # ── Hardcoded demo targets fallback ─────────────────────────────────────────
+    print("[DATA] Using hardcoded demo targets (run ml_trainer.py then run_inference.py to upgrade)")
     np.random.seed(123)
 
     targets = [

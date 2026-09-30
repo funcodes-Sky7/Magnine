@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 const NAV = [
   { path: '/dashboard',   label: 'Overview',           icon: '⌂' },
@@ -12,25 +12,20 @@ const NAV = [
 ];
 
 export default function Sidebar() {
-  const navigate = useNavigate();
-  const location = useLocation();
-
   return (
     <nav className="sidebar">
       <div className="sidebar-nav">
         <div className="sidebar-section-label">Navigation</div>
         {NAV.map(item => (
-          <div
+          <NavLink
             key={item.path}
-            className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
-            onClick={() => navigate(item.path)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={e => e.key === 'Enter' && navigate(item.path)}
+            to={item.path}
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+            style={{ textDecoration: 'none' }}
           >
             <span className="nav-item-icon" style={{ fontSize: 14, lineHeight: 1 }}>{item.icon}</span>
             <span>{item.label}</span>
-          </div>
+          </NavLink>
         ))}
       </div>
 

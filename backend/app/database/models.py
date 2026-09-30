@@ -50,7 +50,7 @@ class Target(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     target_id = Column(String(20), unique=True, index=True)
-    name = Column(String(50))
+    name = Column(String(100))
     priority = Column(String(20))  # HIGH / MODERATE / LOW
     prospectivity = Column(Float)
     confidence = Column(Float)
@@ -64,7 +64,7 @@ class Target(Base):
     state = Column(String(100))
     evidence = Column(JSON)
     feature_contributions = Column(JSON)
-    model_version = Column(String(20))
+    model_version = Column(String(100))
     created_at = Column(DateTime, default=datetime.utcnow)
 
 

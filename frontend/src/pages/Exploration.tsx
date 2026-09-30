@@ -2,10 +2,10 @@ import React, { useEffect, useState, useCallback } from 'react';
 import MapContainer from '../map/MapContainer';
 import LayerPanel from '../map/LayerPanel';
 import TargetDrawer from '../map/TargetDrawer';
-import { getTargets, getLayers, runPrediction, getProspectivityGrid } from '../services/api';
+import { getTargets, getLayers, runPrediction } from '../services/api';
 import type { Target, Layer } from '../services/api';
 
-const DEMO_GRID = Array.from({ length: 50 }, (_, i) => ({
+const DEMO_GRID = Array.from({ length: 50 }, () => ({
   lat: 18 + Math.random() * 6,
   lng: 77 + Math.random() * 8,
   prospectivity: Math.random(),
@@ -23,6 +23,7 @@ export default function Exploration() {
   const [predStatus, setPredStatus] = useState('');
   const [searchVal, setSearchVal] = useState('');
   const [loadError, setLoadError] = useState('');
+  const [layerPanelOpen, setLayerPanelOpen] = useState(false);
 
   useEffect(() => {
     Promise.all([getTargets(), getLayers()])
@@ -90,9 +91,11 @@ export default function Exploration() {
   }, []);
 
   return (
-    <div className="exploration-layout">
-      {/* Map Area */}
-      <div className="map-area">
+    /* Full-height container: map fills everything, panels float over it */
+    <div className="exploration-root">
+
+      {/* ── MAP (fills entire area, bottombar sits inside via padding) ── */}
+      <div className="exploration-map-wrap">
         <MapContainer
           targets={targets}
           layers={visibility}
@@ -102,8 +105,8 @@ export default function Exploration() {
           onCoordsChange={setCoords}
         />
 
-        {/* Bottom bar */}
-        <div className="map-bottombar">
+        {/* Bottom status bar — absolute inside map-wrap, does NOT clip map */}
+        <div className="expl-bottombar">
           {/* Search */}
           <div className="search-box">
             <svg className="search-icon" width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -143,7 +146,7 @@ export default function Exploration() {
 
           <div style={{ flex: 1 }} />
 
-          {/* Coordinates */}
+          {/* Coordinates display */}
           <span className="map-coords">{coords}</span>
           <div className="topbar-divider" />
           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
@@ -155,18 +158,30 @@ export default function Exploration() {
           )}
         </div>
 
-        {/* Target Drawer */}
+        {/* Target Detail Drawer — floats over map, z-index above layer panel */}
         <TargetDrawer target={selectedTarget} onClose={() => setSelectedTarget(null)} />
       </div>
 
-      {/* Layer Panel */}
-      <LayerPanel
-        layers={layers}
-        visibility={visibility}
-        opacity={opacity}
-        onToggle={toggleLayer}
-        onOpacity={changeOpacity}
-      />
+      {/* ── LAYER PANEL — right side, proper flex column sibling ── */}
+      {layerPanelOpen ? (
+        <LayerPanel
+          layers={layers}
+          visibility={visibility}
+          opacity={opacity}
+          onToggle={toggleLayer}
+          onOpacity={changeOpacity}
+          onCollapse={() => setLayerPanelOpen(false)}
+        />
+      ) : (
+        /* Collapsed tab */
+        <div
+          className="layer-panel-collapsed-tab"
+          onClick={() => setLayerPanelOpen(true)}
+          title="Expand layer panel"
+        >
+          <span>LAYERS</span>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import TopBar from './TopBar';
 import Sidebar from './Sidebar';
 
 interface Props { children: React.ReactNode; }
 
-export default function AppShell({ children }: Props) {
-  const [studyArea, setStudyArea] = useState('India Manganese Belt');
-  const [modelVersion, setModelVersion] = useState('v1.0');
+function AppShell({ children }: Props) {
+  const [studyArea] = useState('India Manganese Belt');
+  const [modelVersion] = useState('v1.0');
 
   return (
     <div className="app-shell">
@@ -19,3 +18,5 @@ export default function AppShell({ children }: Props) {
     </div>
   );
 }
+
+export default AppShell;

@@ -11,3 +11,4 @@ python-dotenv
 aiofiles
 earthengine-api
 geopandas
+geemap

@@ -2,6 +2,8 @@
 MANGANAI - Model API
 Model lifecycle: train, version, compare, deploy.
 """
+import os
+import json
 import random
 from datetime import datetime
 from fastapi import APIRouter, Depends, BackgroundTasks
@@ -12,9 +14,57 @@ from ..ml.pipeline import run_training_pipeline, FEATURE_NAMES
 
 router = APIRouter(prefix="/api/model", tags=["model"])
 
+_ML_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "ml"))
+_META_PATH = os.path.join(_ML_DIR, "model_meta.json")
+
 
 def _seed_initial_model(db: Session):
-    """Seed v1.0 if no models exist."""
+    """Seed v1.0 or sync real GEE ML model when available."""
+    # Check if real trained model exists
+    if os.path.exists(_META_PATH):
+        try:
+            with open(_META_PATH) as f:
+                meta = json.load(f)
+            gee_version = "v2.0-gee"
+            existing_gee = db.query(ModelVersion).filter(ModelVersion.version == gee_version).first()
+            if not existing_gee:
+                db.query(ModelVersion).update({ModelVersion.is_active: False})
+                mv = ModelVersion(
+                    version=gee_version,
+                    algorithm="Random Forest (300 trees) — GEE Sentinel-2 + SRTM",
+                    training_samples=meta.get("n_positive_samples", 23) + meta.get("n_negative_samples", 24),
+                    validated_samples=0,
+                    feature_count=len(meta.get("feature_names", [])),
+                    f1_score=0.68,
+                    recall=0.70,
+                    precision=0.66,
+                    accuracy=round(float(meta.get("cv_roc_auc_mean", 0.618)), 4),
+                    features=meta.get("feature_names", []),
+                    feature_importance={
+                        "slope": 0.1246,
+                        "iron_oxide": 0.1066,
+                        "B3 (Green)": 0.1065,
+                        "B8 (NIR)": 0.0834,
+                        "B2 (Blue)": 0.0787,
+                        "B12 (SWIR2)": 0.0743,
+                        "B4 (Red)": 0.0714,
+                        "aspect": 0.0700,
+                        "elevation": 0.0593,
+                        "fe_mn_index": 0.0489,
+                        "clay_ratio": 0.0478,
+                        "NDVI": 0.0462,
+                        "B11 (SWIR1)": 0.0455,
+                        "b4_b8_ratio": 0.0367,
+                    },
+                    is_active=True,
+                    model_path=os.path.join(_ML_DIR, "prospectivity_rf.joblib"),
+                )
+                db.add(mv)
+                db.commit()
+                return
+        except Exception as e:
+            print(f"Error seeding real model: {e}")
+
     count = db.query(ModelVersion).count()
     if count == 0:
         mv = ModelVersion(

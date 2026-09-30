@@ -2,27 +2,44 @@ import os
 import ee
 import pandas as pd
 from typing import Dict, Any
+from dotenv import load_dotenv
 
-# Get project ID from env or fallback to a dummy placeholder
-PROJECT_ID = os.getenv("GEE_PROJECT_ID", "your-project-id")
+load_dotenv()
+
+# Get project ID from env or fallback to user's GEE project
+PROJECT_ID = os.getenv("GEE_PROJECT_ID", "vaulted-splice-465917-n1")
+
+# Credentials file written by ee.Authenticate() / earthengine authenticate
+_CREDENTIALS_PATH = os.path.expanduser("~/.config/earthengine/credentials")
 
 _initialized = False
 
-def init_gee():
+
+def init_gee() -> bool:
+    """
+    Initialize Google Earth Engine using OAuth credentials from
+    ~/.config/earthengine/credentials (written by ee.Authenticate()).
+    Returns True on success, False on any failure.
+
+    NOTE: _initialized is only set True on success, so transient network
+    failures at startup do NOT permanently disable GEE — the next request
+    will retry.
+    """
     global _initialized
     if _initialized:
         return True
-        
+
+    # Primary: plain Initialize (picks up ~/.config/earthengine/credentials
+    # automatically via the EE SDK's own credential loading path)
     try:
-        # Try to initialize with default credentials (e.g. from ee.Authenticate() run locally)
         ee.Initialize(project=PROJECT_ID)
         _initialized = True
+        print(f"[GEE] Initialized successfully with project '{PROJECT_ID}'")
         return True
     except Exception as e:
-        print(f"GEE Initialization failed: {e}")
-        # Note: In a production server, we would use a Service Account JSON key.
-        # For development, the user must run `earthengine authenticate` or `ee.Authenticate()` in their local Python env first.
+        print(f"[GEE] Initialization failed: {e}")
         return False
+
 
 def extract_features(longitude: float = 80.18, latitude: float = 21.80, radius_m: int = 5000) -> Dict[str, Any]:
     """
@@ -34,38 +51,33 @@ def extract_features(longitude: float = 80.18, latitude: float = 21.80, radius_m
             "success": False,
             "error": "Earth Engine not initialized. Please run `ee.Authenticate()` locally first or set valid credentials."
         }
-        
+
     try:
         print("GEE API Status: Successfully connected to your cloud engine!")
-        
+
         # Step 4: Define Exploration Coordinates
         target_area = ee.Geometry.Point([longitude, latitude]).buffer(radius_m)
         print("Target geographic sector configured successfully.")
-        
+
         # Step 5/6: Define terrain_stack and sample grid
-        # We use USGS SRTM elevation data to build a basic terrain stack
         dem = ee.Image('USGS/SRTMGL1_003')
         slope = ee.Terrain.slope(dem)
         aspect = ee.Terrain.aspect(dem)
-        
-        # Combine into a stack
+
         terrain_stack = ee.Image.cat([dem, slope, aspect]).rename(['elevation', 'slope', 'aspect'])
-        
-        # Extract data points
+
         sample_grid = terrain_stack.sample(region=target_area, scale=200, numPixels=100)
-        
-        # Convert to Python list format
+
         feature_list = []
         for feature in sample_grid.getInfo()['features']:
             properties = feature['properties']
             feature_list.append(properties)
-            
-        # Load into DataFrame
+
         df = pd.DataFrame(feature_list)
-        
+
         print("\n--- AI FEATURE MATRIX EXTRACTED ---")
         print(df.head())
-        
+
         return {
             "success": True,
             "message": "AI FEATURE MATRIX EXTRACTED",
@@ -73,7 +85,7 @@ def extract_features(longitude: float = 80.18, latitude: float = 21.80, radius_m
             "head": df.head().to_dict(orient="records"),
             "total_samples": len(df)
         }
-        
+
     except Exception as e:
         return {
             "success": False,

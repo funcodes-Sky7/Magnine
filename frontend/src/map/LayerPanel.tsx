@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { Layer } from '../services/api';
 
 interface Props {
@@ -7,25 +7,16 @@ interface Props {
   opacity: Record<string, number>;
   onToggle: (id: string) => void;
   onOpacity: (id: string, v: number) => void;
+  onCollapse?: () => void;
 }
 
-export default function LayerPanel({ layers, visibility, opacity, onToggle, onOpacity }: Props) {
-  const [collapsed, setCollapsed] = useState(false);
-
-  if (collapsed) {
-    return (
-      <div style={{ width: 36, background: 'var(--bg-white)', borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 12, cursor: 'pointer' }}
-        onClick={() => setCollapsed(false)} title="Expand layer panel">
-        <span style={{ fontSize: 16, color: 'var(--text-muted)', writingMode: 'vertical-rl', marginTop: 8 }}>LAYERS</span>
-      </div>
-    );
-  }
+export default function LayerPanel({ layers, visibility, opacity, onToggle, onOpacity, onCollapse }: Props) {
 
   return (
     <div className="layer-panel">
       <div className="layer-panel-header">
         <span className="layer-panel-title">Data Sources</span>
-        <button className="btn btn-secondary btn-sm btn-icon" onClick={() => setCollapsed(true)} title="Collapse">
+        <button className="btn btn-secondary btn-sm btn-icon" onClick={onCollapse} title="Collapse">
           ›
         </button>
       </div>

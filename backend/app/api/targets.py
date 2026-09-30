@@ -11,10 +11,17 @@ router = APIRouter(prefix="/api/targets", tags=["targets"])
 
 
 def _seed_targets_if_empty(db: Session):
-    """Seed demo targets into DB if table is empty."""
+    """Seed targets into DB if table is empty, or sync when real ML model predictions are available."""
     count = db.query(TargetDB).count()
-    if count == 0:
-        for t in get_demo_targets():
+    available_targets = get_demo_targets()
+    
+    first = db.query(TargetDB).first()
+    has_real_preds = any("RandomForest" in str(t.get("model_version", "")) for t in available_targets)
+    is_old_demo = first and ("RandomForest" not in str(first.model_version or ""))
+
+    if count == 0 or (is_old_demo and has_real_preds):
+        db.query(TargetDB).delete()
+        for t in available_targets:
             db_target = TargetDB(
                 target_id=t["target_id"],
                 name=t["name"],
@@ -24,14 +31,14 @@ def _seed_targets_if_empty(db: Session):
                 risk=t["risk"],
                 lat=t["lat"],
                 lng=t["lng"],
-                area_km2=t["area_km2"],
-                depth_min=t["depth_min"],
-                depth_max=t["depth_max"],
-                geology=t["geology"],
-                state=t["state"],
-                evidence=t["evidence"],
-                feature_contributions=t["feature_contributions"],
-                model_version="v1.0",
+                area_km2=t.get("area_km2", 50.0),
+                depth_min=t.get("depth_min", 10),
+                depth_max=t.get("depth_max", 60),
+                geology=t.get("geology", "Precambrian Metamorphic"),
+                state=t.get("state", "India"),
+                evidence=t.get("evidence", []),
+                feature_contributions=t.get("feature_contributions", {}),
+                model_version=t.get("model_version", "v1.0"),
             )
             db.add(db_target)
         db.commit()
@@ -42,6 +49,7 @@ def get_targets(db: Session = Depends(get_db)):
     _seed_targets_if_empty(db)
     targets = db.query(TargetDB).order_by(TargetDB.prospectivity.desc()).all()
     result = []
+    has_real = any("RandomForest" in str(t.model_version or "") for t in targets)
     for t in targets:
         result.append({
             "target_id": t.target_id,
@@ -65,7 +73,7 @@ def get_targets(db: Session = Depends(get_db)):
         "targets": result,
         "count": len(result),
         "study_area": get_study_area(),
-        "note": "DEMO DATA — For system demonstration only. Not geological reserve estimates.",
+        "note": "REAL ML PREDICTIONS — GEE Sentinel-2 + SRTM Random Forest model" if has_real else "DEMO DATA — For system demonstration only. Not geological reserve estimates.",
     }
 
 

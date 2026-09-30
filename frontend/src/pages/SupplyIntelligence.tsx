@@ -126,7 +126,7 @@ export default function SupplyIntelligence() {
                     <XAxis dataKey="year" tick={{ fontSize: 11, fill: '#697078' }} />
                     <YAxis tick={{ fontSize: 11, fill: '#697078' }} unit=" Mt" domain={[3, 8]} />
                     <Tooltip contentStyle={{ fontSize: 11, border: '1px solid var(--border)', borderRadius: 4 }}
-                      formatter={(v: any, n: string) => [`${v} Mt`, n]} />
+                      formatter={(v: any, n: any) => [`${v} Mt`, String(n)]} />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
                     <Line dataKey="demand" stroke="#DC2626" strokeWidth={2} strokeDasharray="5 3" dot={false} name="Demand" />
                     {(Object.keys(SCENARIO_LABELS) as Scenario[]).map(sk => (
