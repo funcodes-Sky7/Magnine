@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ..database.connection import get_db
 from ..database.models import Target as TargetDB
-from ..geospatial.demo_data import get_demo_targets, get_study_area
+from ..geospatial.demo_data import get_demo_targets, get_study_area, priority_from_prospectivity
 
 router = APIRouter(prefix="/api/targets", tags=["targets"])
 
@@ -51,10 +51,11 @@ def get_targets(db: Session = Depends(get_db)):
     result = []
     has_real = any("RandomForest" in str(t.model_version or "") for t in targets)
     for t in targets:
+        prio = priority_from_prospectivity(t.prospectivity) if t.prospectivity is not None else t.priority
         result.append({
             "target_id": t.target_id,
             "name": t.name,
-            "priority": t.priority,
+            "priority": prio,
             "prospectivity": t.prospectivity,
             "confidence": t.confidence,
             "risk": t.risk,
@@ -84,10 +85,11 @@ def get_target(target_id: str, db: Session = Depends(get_db)):
     if not t:
         raise HTTPException(status_code=404, detail=f"Target {target_id} not found")
 
+    prio = priority_from_prospectivity(t.prospectivity) if t.prospectivity is not None else t.priority
     return {
         "target_id": t.target_id,
         "name": t.name,
-        "priority": t.priority,
+        "priority": prio,
         "prospectivity": t.prospectivity,
         "confidence": t.confidence,
         "risk": t.risk,
@@ -101,6 +103,6 @@ def get_target(target_id: str, db: Session = Depends(get_db)):
         "evidence": t.evidence or [],
         "feature_contributions": t.feature_contributions or {},
         "model_version": t.model_version,
-        "recommended_action": "FIELD VALIDATION" if t.prospectivity > 0.75 else "ADDITIONAL SURVEY",
+        "recommended_action": "FIELD VALIDATION" if t.prospectivity >= 0.80 else "ADDITIONAL SURVEY",
         "depth_estimate_note": "Estimated from integrated geological, geophysical and available subsurface evidence.",
     }

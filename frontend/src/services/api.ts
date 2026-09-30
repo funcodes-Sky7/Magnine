@@ -8,6 +8,7 @@ import {
   FALLBACK_SUPPLY,
   FALLBACK_SUPPLY_SCENARIOS,
   FALLBACK_CONCESSION_BLOCKS,
+  priorityFromProspectivity,
 } from '../data/fallbackData';
 
 const BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
@@ -92,9 +93,18 @@ export const getLayers = () =>
 export const getTargets = () =>
   api
     .get<{ targets: Target[]; count: number; study_area: any }>('/api/targets')
-    .then(r => r.data)
+    .then(r => ({
+      ...r.data,
+      targets: (r.data.targets || []).map(t => ({
+        ...t,
+        priority: priorityFromProspectivity(t.prospectivity),
+      })),
+    }))
     .catch(() => ({
-      targets: FALLBACK_TARGETS,
+      targets: FALLBACK_TARGETS.map(t => ({
+        ...t,
+        priority: priorityFromProspectivity(t.prospectivity),
+      })),
       count: FALLBACK_TARGETS.length,
       study_area: { name: 'India Manganese Belt' },
     }));
@@ -102,11 +112,14 @@ export const getTargets = () =>
 export const getTarget = (id: string) =>
   api
     .get<Target>(`/api/targets/${id}`)
-    .then(r => r.data)
+    .then(r => ({
+      ...r.data,
+      priority: priorityFromProspectivity(r.data.prospectivity),
+    }))
     .catch(() => {
       const found = FALLBACK_TARGETS.find(t => t.target_id === id);
-      if (found) return found;
-      return FALLBACK_TARGETS[0];
+      const t = found || FALLBACK_TARGETS[0];
+      return { ...t, priority: priorityFromProspectivity(t.prospectivity) };
     });
 
 export const runPrediction = () =>
@@ -242,9 +255,18 @@ export interface ConcessionBlock {
 export const getConcessions = (): Promise<{ concessions: ConcessionBlock[]; count: number; data_source: string }> =>
   api
     .get<{ concessions: ConcessionBlock[]; count: number; data_source: string }>('/api/concessions')
-    .then(r => r.data)
+    .then(r => ({
+      ...r.data,
+      concessions: (r.data.concessions || []).map(b => ({
+        ...b,
+        priority: priorityFromProspectivity(b.score),
+      })),
+    }))
     .catch(() => ({
-      concessions: FALLBACK_CONCESSION_BLOCKS as ConcessionBlock[],
+      concessions: (FALLBACK_CONCESSION_BLOCKS as ConcessionBlock[]).map(b => ({
+        ...b,
+        priority: priorityFromProspectivity(b.score),
+      })),
       count: FALLBACK_CONCESSION_BLOCKS.length,
       data_source: 'static_fallback',
     }));

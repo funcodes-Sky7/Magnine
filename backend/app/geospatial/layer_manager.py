@@ -14,6 +14,7 @@ from .demo_data import (
     KNOWN_OCCURRENCES,
     FAULTS,
     generate_targets,
+    priority_from_prospectivity,
 )
 
 # ── Caches ────────────────────────────────────────────────────────────────────
@@ -113,7 +114,7 @@ def get_plots_feature_collection() -> ee.FeatureCollection:
                      [lng - w/2, lat - h/2]]
                 ])
                 score = round(float(np.clip(np.random.beta(2, 3), 0.35, 0.95)), 3)
-                prio = "HIGH" if score > 0.75 else "MODERATE" if score > 0.55 else "LOW"
+                prio = priority_from_prospectivity(score)
                 col = "15803D" if prio == "HIGH" else "B45309" if prio == "MODERATE" else "1D4ED8"
                 fill = "22C55E30" if prio == "HIGH" else "F59E0B25" if prio == "MODERATE" else "3B82F620"
 
@@ -601,6 +602,8 @@ def query_viewport_plots(
         for p in plots:
             if "plot_id" in p and "id" not in p:
                 p["id"] = p["plot_id"]
+            if "prospectivity" in p and p["prospectivity"] is not None:
+                p["priority"] = priority_from_prospectivity(float(p["prospectivity"]))
 
         duration_ms = round((time.time() - start_t) * 1000, 1)
 

@@ -30,7 +30,7 @@ import {
   getConcessions,
   type GEECatalog,
 } from '../services/api';
-import { FALLBACK_OCCURRENCES } from '../data/fallbackData';
+import { FALLBACK_OCCURRENCES, priorityFromProspectivity } from '../data/fallbackData';
 
 // Fix leaflet icon paths
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -262,17 +262,19 @@ function ViewportPlotLayer({
 
   return (
     <>
-      {plots.map(plot => (
-        <CircleMarker
-          key={plot.id}
-          center={[plot.lat, plot.lng]}
-          radius={5}
-          fillColor={plot.priority === 'HIGH' ? '#22c55e' : '#f59e0b'}
-          fillOpacity={0.75}
-          color="#ffffff"
-          weight={1.5}
-          eventHandlers={{ click: () => onPlotClick?.(plot) }}
-        >
+      {plots.map(plot => {
+        const plotPrio = plot.priority || (plot.prospectivity !== undefined ? priorityFromProspectivity(plot.prospectivity) : 'MODERATE');
+        return (
+          <CircleMarker
+            key={plot.id}
+            center={[plot.lat, plot.lng]}
+            radius={5}
+            fillColor={plotPrio === 'HIGH' ? '#22c55e' : plotPrio === 'MODERATE' ? '#f59e0b' : '#94a3b8'}
+            fillOpacity={0.75}
+            color="#ffffff"
+            weight={1.5}
+            eventHandlers={{ click: () => onPlotClick?.(plot) }}
+          >
           <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
             <div style={{ fontFamily: 'Inter,sans-serif', minWidth: 120 }}>
               <div style={{ fontSize: 10, color: '#94a3b8', fontWeight: 600 }}>{plot.id}</div>
@@ -283,7 +285,8 @@ function ViewportPlotLayer({
             </div>
           </Tooltip>
         </CircleMarker>
-      ))}
+        );
+      })}
     </>
   );
 }
@@ -474,7 +477,7 @@ export default function MapContainer({
           const pseudoTarget: Target = {
             target_id: String(feat.id || feat.plot_id || feat.name || 'GEE-Feature'),
             name: feat.name || feat.label || feat.type || 'GEE Feature',
-            priority: (feat.priority?.toUpperCase() || 'MODERATE') as any,
+            priority: priorityFromProspectivity(feat.prospectivity ?? 0.5),
             prospectivity: feat.prospectivity ?? 0.5,
             confidence: feat.confidence ?? 0.5,
             risk: feat.risk || 'Moderate',
@@ -604,7 +607,7 @@ export default function MapContainer({
             const pseudoTarget: Target = {
               target_id: plot.id,
               name: plot.name,
-              priority: (plot.priority?.toUpperCase() || 'MODERATE') as any,
+              priority: priorityFromProspectivity(plot.prospectivity ?? 0.5),
               prospectivity: plot.prospectivity ?? 0.5,
               confidence: 0.7,
               risk: 'Moderate',
@@ -626,8 +629,9 @@ export default function MapContainer({
         {/* ── Square / Rectangular Concession Lease Blocks (AI-scored) ── */}
         {layerVisibility['plots'] === true &&
           concessionBlocks.map(block => {
-            const isHigh = block.priority === 'HIGH';
-            const isMod = block.priority === 'MODERATE';
+            const prio = priorityFromProspectivity(block.score);
+            const isHigh = prio === 'HIGH';
+            const isMod = prio === 'MODERATE';
             const borderColor = isHigh ? '#16A34A' : isMod ? '#EA580C' : '#64748B';
             const fillColor   = isHigh ? '#22C55E' : isMod ? '#FB923C' : '#94A3B8';
             return (
@@ -657,7 +661,7 @@ export default function MapContainer({
                         fontSize: 10, fontWeight: 700, padding: '1px 6px',
                         borderRadius: 4, background: borderColor, color: '#fff',
                       }}>
-                        {block.priority}
+                        {prio}
                       </span>
                     </div>
                     {block.cell_count !== undefined && (
@@ -678,8 +682,9 @@ export default function MapContainer({
             const radius_km = Math.sqrt((target.area_km2 || 60) / Math.PI);
             const dLat = radius_km / 111;
             const dLng = radius_km / (111 * Math.cos((target.lat * Math.PI) / 180));
-            const isHigh = target.priority === 'HIGH';
-            const isMod = target.priority === 'MODERATE';
+            const prio = priorityFromProspectivity(target.prospectivity);
+            const isHigh = prio === 'HIGH';
+            const isMod = prio === 'MODERATE';
             const isSelected = selectedTarget?.target_id === target.target_id;
             const strokeColor = isSelected ? '#3B82F6' : isHigh ? '#16A34A' : isMod ? '#EA580C' : '#64748B';
             const fillColor = isHigh ? '#22C55E' : isMod ? '#FB923C' : '#94A3B8';
@@ -736,8 +741,9 @@ export default function MapContainer({
 
         {/* ── AI Exploration Target Markers (Green dots = High, Orange dots = Moderate) ── */}
         {targets.map(target => {
-          const isHigh = target.priority === 'HIGH';
-          const isMod = target.priority === 'MODERATE';
+          const prio = priorityFromProspectivity(target.prospectivity);
+          const isHigh = prio === 'HIGH';
+          const isMod = prio === 'MODERATE';
           const isSelected = selectedTarget?.target_id === target.target_id;
           const fillColor = isHigh ? '#16A34A' : isMod ? '#EA580C' : '#64748B';
 
@@ -755,7 +761,7 @@ export default function MapContainer({
               <Tooltip direction="top" offset={[0, -10]} opacity={1}>
                 <div style={{ fontFamily: 'Inter, sans-serif', minWidth: 150 }}>
                   <div style={{ fontSize: 10, color: fillColor, fontWeight: 700 }}>
-                    {target.priority} PRIORITY TARGET
+                    {prio} PRIORITY TARGET
                   </div>
                   <div style={{ fontSize: 13, fontWeight: 700, margin: '2px 0' }}>
                     {target.name} ({target.target_id})
