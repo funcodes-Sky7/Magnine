@@ -29,8 +29,31 @@ def init_gee() -> bool:
     if _initialized:
         return True
 
-    # Primary: plain Initialize (picks up ~/.config/earthengine/credentials
-    # automatically via the EE SDK's own credential loading path)
+    # 1. Cloud Hosting: Service Account credentials (ideal for Render, Cloud Run, etc.)
+    service_account = os.getenv("GEE_SERVICE_ACCOUNT")
+    key_file = os.getenv("GEE_SERVICE_ACCOUNT_KEY_FILE")
+    key_json = os.getenv("GEE_SERVICE_ACCOUNT_KEY_JSON")
+
+    if service_account and key_file and os.path.exists(key_file):
+        try:
+            credentials = ee.ServiceAccountCredentials(service_account, key_file)
+            ee.Initialize(credentials, project=PROJECT_ID)
+            _initialized = True
+            print(f"[GEE] Initialized with Service Account '{service_account}' from key file")
+            return True
+        except Exception as e:
+            print(f"[GEE] Service account key file auth failed: {e}")
+    elif service_account and key_json:
+        try:
+            credentials = ee.ServiceAccountCredentials(service_account, key_data=key_json)
+            ee.Initialize(credentials, project=PROJECT_ID)
+            _initialized = True
+            print(f"[GEE] Initialized with Service Account '{service_account}' from env key JSON")
+            return True
+        except Exception as e:
+            print(f"[GEE] Service account key JSON auth failed: {e}")
+
+    # 2. Local / OAuth credentials (~/.config/earthengine/credentials)
     try:
         ee.Initialize(project=PROJECT_ID)
         _initialized = True
