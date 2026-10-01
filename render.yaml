@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: manganai-backend
+    env: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.13
+      - key: GEE_PROJECT_ID
+        value: vaulted-splice-465917-n1
